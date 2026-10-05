@@ -34,6 +34,9 @@ const incidentSchema = z.object({
 const createReportSchema = z.object({
   siteId: z.coerce.number().int().positive(),
   reportDate: z.string().date('Report date must be in YYYY-MM-DD format.'),
+  // Generated on the phone, reused on every retry, so a resend after a
+  // dropped connection cannot store the same report twice.
+  clientUuid: z.string().uuid().optional(),
   weather: z.string().optional(),
   progressNotes: z.string().optional(),
   delaysNotes: z.string().optional(),
@@ -77,8 +80,10 @@ async function create(req, res, next) {
       return res.status(403).json({ error: 'You are not assigned to that site.' });
     }
 
-    const report = await reportService.createReport(req.user, data);
-    return res.status(201).json({ report });
+    const { report, created } = await reportService.createReport(req.user, data);
+
+    // 200 means "we already had this one" — the phone can safely stop retrying.
+    return res.status(created ? 201 : 200).json({ report, created });
   } catch (err) {
     if (err.status === 409) return res.status(409).json({ error: err.message });
     if (err.code === '23503') return res.status(404).json({ error: 'That site does not exist.' });

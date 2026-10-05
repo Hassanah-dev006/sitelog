@@ -37,20 +37,29 @@ function toReport(row) {
 
 // --------------------------------------------------------------- create ----
 
+/**
+ * Returns { report, created }.
+ *
+ * `created` is false when this exact submission had already arrived — the
+ * phone retried after a dropped connection. The caller answers 200 rather
+ * than 201 and nothing is stored twice.
+ */
 async function createReport(user, data) {
   return withTransaction(async (client) => {
     let report;
+    let created = true;
 
     try {
       const { rows } = await client.query(
         `INSERT INTO daily_reports
            (site_id, report_date, submitted_by, weather, progress_notes, delays_notes,
-            status, submitted_at)
-         VALUES ($1, $2, $3, $4, $5, $6, 'submitted', NOW())
+            status, submitted_at, client_uuid)
+         VALUES ($1, $2, $3, $4, $5, $6, 'submitted', NOW(), $7)
+         ON CONFLICT (client_uuid) WHERE client_uuid IS NOT NULL DO NOTHING
          RETURNING id, site_id, report_date, submitted_by, weather, progress_notes,
                    delays_notes, status, submitted_at`,
         [data.siteId, data.reportDate, user.id, data.weather ?? null,
-         data.progressNotes ?? null, data.delaysNotes ?? null]
+         data.progressNotes ?? null, data.delaysNotes ?? null, data.clientUuid ?? null]
       );
       report = rows[0];
     } catch (err) {
@@ -59,6 +68,21 @@ async function createReport(user, data) {
         throw new ConflictError('A report for this site and date already exists.');
       }
       throw err;
+    }
+
+    // No row came back: this client_uuid was already stored. Return what is
+    // there and skip the line items, which were written the first time.
+    if (!report) {
+      const { rows } = await client.query(
+        `SELECT id, site_id, report_date, submitted_by, weather, progress_notes,
+                delays_notes, status, submitted_at
+         FROM daily_reports WHERE client_uuid = $1`,
+        [data.clientUuid]
+      );
+      return {
+        created: false,
+        report: toReport({ ...rows[0], submitted_by_name: user.fullName }),
+      };
     }
 
     const reportId = report.id;
@@ -98,15 +122,48 @@ async function createReport(user, data) {
     }
 
     return {
-      ...toReport({ ...report, submitted_by_name: user.fullName }),
-      counts: {
-        manpower: (data.manpower ?? []).length,
-        equipment: (data.equipment ?? []).length,
-        materials: (data.materials ?? []).length,
-        incidents: (data.incidents ?? []).length,
+      created,
+      report: {
+        ...toReport({ ...report, submitted_by_name: user.fullName }),
+        counts: {
+          manpower: (data.manpower ?? []).length,
+          equipment: (data.equipment ?? []).length,
+          materials: (data.materials ?? []).length,
+          incidents: (data.incidents ?? []).length,
+        },
       },
     };
   });
+}
+
+// --------------------------------------------------------------- photos ----
+
+async function addPhotos(reportId, userId, files) {
+  const saved = [];
+
+  for (const file of files) {
+    const { rows } = await query(
+      `INSERT INTO report_photos (report_id, file_path, caption, byte_size, mime_type, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, file_path, byte_size, mime_type, uploaded_at`,
+      [reportId, file.filename, file.caption ?? null, file.size, file.mimetype, userId]
+    );
+    const r = rows[0];
+    saved.push({
+      id: Number(r.id),
+      filePath: r.file_path,
+      byteSize: r.byte_size,
+      mimeType: r.mime_type,
+      uploadedAt: r.uploaded_at,
+    });
+  }
+
+  return saved;
+}
+
+async function getReportSiteId(reportId) {
+  const { rows } = await query('SELECT site_id FROM daily_reports WHERE id = $1', [reportId]);
+  return rows[0] ? Number(rows[0].site_id) : null;
 }
 
 // ----------------------------------------------------------------- list ----
@@ -215,4 +272,8 @@ async function getReport(id) {
   return report;
 }
 
-module.exports = { createReport, listReports, getReport, ConflictError };
+module.exports = {
+  createReport, listReports, getReport,
+  addPhotos, getReportSiteId,
+  ConflictError,
+};
