@@ -32,6 +32,11 @@ const env = {
 
   // Cost factor for bcrypt. Lowered in tests so the suite stays fast.
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS || (process.env.NODE_ENV === 'test' ? 4 : 12)),
+
+  // Site photos. The phone compresses before uploading, so this ceiling is
+  // generous — it exists to stop an un-compressed original being sent.
+  uploadDir: process.env.UPLOAD_DIR || require('path').join(__dirname, '..', '..', 'uploads'),
+  maxPhotoBytes: Number(process.env.MAX_PHOTO_BYTES || 3 * 1024 * 1024),
 };
 
 env.isProduction = env.nodeEnv === 'production';
