@@ -1,0 +1,305 @@
+/*
+ * Mobile-first styles.
+ *
+ * Designed for a phone held in one hand in bright daylight: high contrast,
+ * large text, and every tappable thing at least 44px tall, which is the
+ * smallest target most people can hit reliably.
+ */
+
+:root {
+  --green: #0f3d2e;
+  --green-light: #1a5c46;
+  --ink: #15201c;
+  --muted: #5c6b65;
+  --line: #d9e2dd;
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --danger: #a3241c;
+  --danger-bg: #fdecea;
+  --success: #15663f;
+  --success-bg: #e7f5ed;
+  --radius: 10px;
+  --tap: 48px;
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* 16px minimum, or iOS zooms the page when a field is focused. */
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ------------------------------------------------------------- app bar -- */
+
+.appbar {
+  background: var(--green);
+  color: #fff;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
+}
+
+.appbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand { font-weight: 700; font-size: 1.125rem; letter-spacing: 0.02em; }
+
+.appbar-user { margin: 4px 0 0; font-size: 0.8125rem; opacity: 0.85; }
+
+.link-button {
+  background: none;
+  border: none;
+  color: #fff;
+  text-decoration: underline;
+  font-size: 0.9375rem;
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------- content -- */
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px 96px;
+}
+
+.page-title { font-size: 1.25rem; margin: 4px 0 16px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.muted { color: var(--muted); }
+.small { font-size: 0.8125rem; }
+.center { text-align: center; }
+
+/* -------------------------------------------------------------- fields -- */
+
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin: 14px 0 6px;
+}
+
+label:first-of-type { margin-top: 0; }
+
+input, select, textarea {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+textarea { min-height: auto; resize: vertical; }
+
+input:focus, select:focus, textarea:focus {
+  outline: 3px solid var(--green-light);
+  outline-offset: 1px;
+  border-color: var(--green-light);
+}
+
+/* ------------------------------------------------------------- buttons -- */
+
+button {
+  font: inherit;
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-height: var(--tap);
+}
+
+.primary {
+  width: 100%;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  padding: 14px;
+  margin-top: 16px;
+}
+
+.primary:disabled { opacity: 0.6; cursor: progress; }
+
+.secondary {
+  width: 100%;
+  background: #fff;
+  color: var(--green);
+  border: 1.5px dashed var(--green-light);
+  font-weight: 600;
+  padding: 12px;
+}
+
+.remove {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 0.875rem;
+  padding: 8px 0;
+  min-height: 40px;
+}
+
+/* ------------------------------------------------------------- alerts -- */
+
+.alert {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin: 0 0 16px;
+  font-size: 0.9375rem;
+}
+
+.alert-error { background: var(--danger-bg); color: var(--danger); }
+.alert-success { background: var(--success-bg); color: var(--success); }
+
+/* Not an error: the report is safe, it just has not left the phone yet. */
+.alert-offline { background: #fff4e0; color: #7a4a06; border-left: 4px solid #c97a10; }
+.alert-pending { background: #eaf1fb; color: #1b4a8a; border-left: 4px solid #2f6fc4; }
+
+/* --------------------------------------------------------------- photos -- */
+
+.photo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.photo-row:first-child { border-top: none; }
+
+.photo-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+}
+
+.photo-row .remove { padding: 8px; }
+
+ul.alert { padding-left: 32px; }
+
+/* ------------------------------------------------- collapsible sections -- */
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.section-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 16px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.section-meta { display: flex; align-items: center; gap: 10px; }
+
+.badge {
+  background: var(--green);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 0.8125rem;
+}
+
+.chevron { font-size: 1.25rem; color: var(--muted); }
+
+.section-body { padding: 0 16px 16px; }
+
+.row {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.row:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+.row input + input, .row input + select { margin-top: 8px; }
+
+.row-split { display: flex; gap: 8px; margin-top: 8px; }
+.row-split > * { flex: 1; min-width: 0; }
+
+/* --------------------------------------------------------- report list -- */
+
+.report-list { list-style: none; margin: 0; padding: 0; }
+
+.report-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.report-row-main { display: flex; flex-direction: column; min-width: 0; }
+.report-row-side { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.date { font-variant-numeric: tabular-nums; font-size: 0.9375rem; }
+
+/* -------------------------------------------------------------- tabbar -- */
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.tabbar a {
+  flex: 1;
+  text-align: center;
+  padding: 14px 8px;
+  min-height: var(--tap);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.tabbar a.active { color: var(--green); box-shadow: inset 0 -3px 0 var(--green); }
+
+.submit-bar { margin-top: 8px; }
+
+/* Wider screens simply get more breathing room, not a different layout. */
+@media (min-width: 700px) {
+  .content { padding-bottom: 32px; }
+  .primary { width: auto; min-width: 220px; }
+}
