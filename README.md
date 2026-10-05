@@ -10,7 +10,7 @@ Built as the Skills Immersion 1 internship artefact by **Hassanat Ajoke Bello**,
 
 ## Status
 
-**Week 7 — works without a signal.** Reports survive a dead zone and send themselves when the connection returns.
+**Week 8 — both sides working.** Supervisors file reports from a phone; management sees live status and knows which sites to chase.
 
 | Week | Scope | State |
 |---|---|---|
@@ -18,8 +18,8 @@ Built as the Skills Immersion 1 internship artefact by **Hassanat Ajoke Bello**,
 | 5 | Projects, sites and daily report API | ✅ done |
 | 6 | React app, mobile report form | ✅ done |
 | 7 | Offline drafts, photo upload | ✅ done |
-| 8 | Management dashboard | next |
-| 9 | PDF / Excel export, security review | |
+| 8 | Management dashboard | ✅ done |
+| 9 | PDF / Excel export, security review | next |
 | 10 | User acceptance testing | |
 | 11 | Deploy, document, hand over | |
 
@@ -77,7 +77,7 @@ The dev server proxies `/api` to port 4000, so no CORS setup is needed. Sign in 
 ## Tests
 
 ```bash
-npm test             # API    — 72 tests
+npm test             # API    — 82 tests
 cd web && npm test   # web    — 32 tests
 cd web && npm run build   # confirms the frontend compiles
 ```
@@ -90,11 +90,12 @@ The API tests cover password hashing, tokens, role permissions, the auth, projec
 
 Three screens, built mobile-first for a supervisor finishing work at six in the evening.
 
-| Screen | Route | What it does |
-|---|---|---|
-| Sign in | `/login` | Email and password, session restored on reload |
-| Daily report | `/report/new` | The main form |
-| Reports | `/reports` | Recent reports, narrowed to what you may see |
+| Screen | Route | Who | What it does |
+|---|---|---|---|
+| Sign in | `/login` | anyone | Email and password, session restored on reload |
+| Daily report | `/report/new` | signed in | The main form |
+| Reports | `/reports` | signed in | Recent reports, narrowed to what you may see |
+| Dashboard | `/dashboard` | manager, admin | Live status, outstanding sites, trends |
 
 Decisions worth knowing:
 
@@ -141,6 +142,26 @@ The server stores `client_uuid` under a unique index and inserts with `ON CONFLI
 
 ---
 
+## The dashboard
+
+Ordered by what needs attention soonest. A manager who opens it for ten seconds should still leave knowing what to chase.
+
+1. **Today's state** — active projects and sites, how many have reported, incidents this week with high-severity called out
+2. **Not yet reported today** — the list that turns missing information into an action
+3. **Reports per day**, then **manpower by trade**, then **equipment hours** with breakdowns noted
+
+Decisions worth knowing:
+
+- **The whole dashboard is one request.** Five endpoints would mean five round trips and a page that fills in piece by piece. The five aggregations run in parallel on the server instead.
+- **The charts are hand-drawn SVG, not a charting library.** A library would have added roughly 150 KB to a bundle this project spent weeks keeping small for weak connections. The entire dashboard — page, charts, styles — added **1.2 KB gzipped**.
+- **The bars are `aria-hidden`.** The number beside each bar is the real content, so a screen reader reads the figures rather than describing decoration.
+- **Supervisors cannot reach it at all.** The dashboard aggregates across every site; a supervisor's job is their own. The restriction is on the route, not just the navigation.
+- **Every figure answers a question a manager actually asked** during requirements gathering. Nothing is shown because it happened to be easy to compute.
+
+Migration 003 adds indexes for the grouping columns. These queries are fine over fifty rows and slow over fifty thousand, which is where this will be in a year.
+
+---
+
 ## API
 
 Send the token on every protected route:
@@ -179,6 +200,15 @@ Authorization: Bearer <token>
 | `POST` | `/api/reports` | assigned supervisor, manager, admin | Submit a daily report |
 | `GET` | `/api/reports` | signed in | List reports, narrowed to what you may see |
 | `GET` | `/api/reports/:id` | signed in | One report with all line items |
+
+### Dashboard
+
+| Method | Route | Who | Purpose |
+|---|---|---|---|
+| `GET` | `/api/dashboard` | manager, admin | Everything the dashboard needs, in one response |
+| `GET` | `/api/dashboard/outstanding` | manager, admin | Sites with no report for a date |
+
+Accepts `from`, `to`, `date` and `projectId`. Defaults to the last 14 days.
 
 List filters: `siteId`, `projectId`, `from`, `to`, `limit` (max 200), `offset`.
 
