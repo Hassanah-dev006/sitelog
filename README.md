@@ -10,13 +10,13 @@ Built as the Skills Immersion 1 internship artefact by **Hassanat Ajoke Bello**,
 
 ## Status
 
-**Week 4 — backend foundation.** Database schema, authentication and role-based access control are done and tested.
+**Week 5 — core API complete.** Schema, auth, roles, projects, sites and the daily report API are done and tested.
 
 | Week | Scope | State |
 |---|---|---|
 | 4 | Schema, auth, roles, tests | ✅ done |
-| 5 | Projects, sites and daily report API | next |
-| 6 | React app, mobile report form | |
+| 5 | Projects, sites and daily report API | ✅ done |
+| 6 | React app, mobile report form | next |
 | 7 | Offline drafts, photo upload | |
 | 8 | Management dashboard | |
 | 9 | PDF / Excel export, security review | |
@@ -59,11 +59,19 @@ curl http://localhost:4000/api/health
 npm test
 ```
 
-32 tests covering password hashing, token handling, role permissions and the auth routes. They mock the database, so they run without PostgreSQL.
+64 tests covering password hashing, token handling, role permissions, and the auth, project, site and report routes. They mock the database, so they run without PostgreSQL.
 
 ---
 
-## API (so far)
+## API
+
+Send the token on every protected route:
+
+```
+Authorization: Bearer <token>
+```
+
+### Auth
 
 | Method | Route | Who | Purpose |
 |---|---|---|---|
@@ -72,19 +80,68 @@ npm test
 | `GET` | `/api/auth/me` | signed in | Current user — restores a session on page load |
 | `POST` | `/api/auth/users` | administrator | Create an account |
 
-Send the token on protected routes:
+### Projects and sites
 
-```
-Authorization: Bearer <token>
-```
+| Method | Route | Who | Purpose |
+|---|---|---|---|
+| `GET` | `/api/projects` | manager, admin | List projects (`?status=active`) |
+| `POST` | `/api/projects` | administrator | Create a project |
+| `GET` | `/api/projects/:id` | manager, admin | One project |
+| `PATCH` | `/api/projects/:id` | administrator | Update a project |
+| `GET` | `/api/projects/:id/sites` | manager, admin | Sites on a project |
+| `POST` | `/api/projects/:id/sites` | administrator | Add a site |
+| `GET` | `/api/sites/:siteId/supervisors` | manager, admin | Who covers this site |
+| `POST` | `/api/sites/:siteId/supervisors` | administrator | Assign a supervisor |
+| `DELETE` | `/api/sites/:siteId/supervisors/:userId` | administrator | Remove an assignment |
 
-### Example
+### Daily reports
+
+| Method | Route | Who | Purpose |
+|---|---|---|---|
+| `POST` | `/api/reports` | assigned supervisor, manager, admin | Submit a daily report |
+| `GET` | `/api/reports` | signed in | List reports, narrowed to what you may see |
+| `GET` | `/api/reports/:id` | signed in | One report with all line items |
+
+List filters: `siteId`, `projectId`, `from`, `to`, `limit` (max 200), `offset`.
+
+### Examples
 
 ```bash
+# Sign in
 curl -X POST http://localhost:4000/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"admin@tihama.test","password":"ChangeMe123!"}'
+
+# Submit a daily report
+curl -X POST http://localhost:4000/api/reports \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "siteId": 1,
+    "reportDate": "2026-10-05",
+    "weather": "Clear",
+    "progressNotes": "Foundation work continued on block B.",
+    "manpower":  [{ "trade": "Masons", "headcount": 6, "hoursWorked": 8 }],
+    "equipment": [{ "equipmentName": "Excavator", "hoursRun": 5, "status": "operational" }],
+    "materials": [{ "materialName": "Cement", "unit": "bags",
+                    "quantityReceived": 100, "quantityUsed": 60 }],
+    "incidents": [{ "category": "safety", "severity": "low",
+                    "description": "Minor hand injury, first aid given." }]
+  }'
+
+# Reports for one project in September
+curl "http://localhost:4000/api/reports?projectId=1&from=2026-09-01&to=2026-09-30" \
+  -H "Authorization: Bearer $TOKEN"
 ```
+
+### Rules enforced by the API
+
+- A supervisor may only submit for a site they are **assigned** to.
+- A supervisor's report listing is narrowed to their own sites **in SQL**, not filtered afterwards.
+- Reading a report on a site you do not cover returns **404, not 403**, so the endpoint cannot be used to discover which reports exist.
+- One report per site per day. A second submission returns **409**.
+- A report dated in the future is rejected.
+- A report and all its line items are written in **one transaction** — a half-saved report is never possible.
 
 ---
 
@@ -107,16 +164,21 @@ src/
   app.js              Express app (exported unstarted, so tests can drive it)
   server.js           Starts the server, handles clean shutdown
   config/env.js       All configuration — fails loudly if something is missing
+  constants/roles.js  The three roles, free of any Express dependency
   db/
-    pool.js           One shared connection pool
+    pool.js           One shared connection pool, plus withTransaction
     migrations/       Versioned SQL, applied in filename order
     seed.js           Development data
   middleware/
-    auth.js           requireAuth, requireRole, ROLES
+    auth.js           requireAuth, requireRole
     errorHandler.js   404 and the single error-to-response boundary
   routes/             HTTP routing only
   controllers/        Request validation and responses
-  services/           Business logic, independent of Express
+  services/
+    auth.service.js     Login and user creation
+    access.service.js   Who may see which site
+    project.service.js  Projects, sites, supervisor assignments
+    report.service.js   Daily reports, written transactionally
   utils/              Password hashing, tokens
 scripts/migrate.js    Migration runner
 tests/                Jest test suite
