@@ -91,6 +91,14 @@ export const api = {
   },
 
   getReport: (id) => request(`/reports/${id}`),
+
+  dashboard: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+    ).toString();
+    return request(`/dashboard${query ? `?${query}` : ''}`);
+  },
+
   createReport: (payload) => request('/reports', { method: 'POST', body: payload }),
 
   /** Photos go up separately, after the report itself has landed. */

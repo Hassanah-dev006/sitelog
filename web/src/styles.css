@@ -177,6 +177,88 @@ button {
 .alert-offline { background: #fff4e0; color: #7a4a06; border-left: 4px solid #c97a10; }
 .alert-pending { background: #eaf1fb; color: #1b4a8a; border-left: 4px solid #2f6fc4; }
 
+/* ------------------------------------------------------------ dashboard -- */
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-alert { border-color: #c97a10; background: #fff8ee; }
+.stat-value { font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+.stat-label { font-size: 0.8125rem; color: var(--muted); }
+.stat-note { font-size: 0.75rem; color: #7a4a06; font-weight: 600; }
+
+.badge-warn { background: #c97a10; }
+
+.outstanding { list-style: none; margin: 0; padding: 0; }
+
+.outstanding li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+.outstanding li:first-child { border-top: none; }
+.outstanding-main { display: flex; flex-direction: column; min-width: 0; }
+
+/* ----------------------------------------------------------- bar charts -- */
+
+.bars { display: flex; flex-direction: column; gap: 8px; }
+
+.bar-row { display: flex; align-items: center; gap: 10px; }
+
+.bar-label {
+  flex: 0 0 34%;
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-track {
+  flex: 1;
+  height: 18px;
+  background: #eef2f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill { display: block; height: 100%; background: var(--green-light); border-radius: 4px; }
+
+.bar-value {
+  flex: 0 0 auto;
+  min-width: 42px;
+  text-align: right;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trend { width: 100%; height: 90px; color: var(--green); display: block; }
+
 /* --------------------------------------------------------------- photos -- */
 
 .photo-row {
