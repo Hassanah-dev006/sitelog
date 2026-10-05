@@ -176,6 +176,52 @@ describe('POST /api/reports', () => {
     expect(res.status).toBe(404);
   });
 
+  test('a retried submission returns 200 and does not store a duplicate', async () => {
+    const uuid = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+
+    query
+      .mockResolvedValueOnce({ rows: [supervisor] })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
+      .mockResolvedValueOnce({ rows: [] })          // ON CONFLICT DO NOTHING — already stored
+      .mockResolvedValueOnce({ rows: [reportRow] }); // fetch the one already there
+
+    const res = await request(app)
+      .post('/api/reports')
+      .set('Authorization', auth(supervisor))
+      .send({ ...validBody, clientUuid: uuid });
+
+    expect(res.status).toBe(200);
+    expect(res.body.created).toBe(false);
+    expect(res.body.report.id).toBe(500);
+  });
+
+  test('a first submission reports created: true', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [supervisor] })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
+      .mockResolvedValueOnce({ rows: [reportRow] })
+      .mockResolvedValue({ rows: [] });
+
+    const res = await request(app)
+      .post('/api/reports')
+      .set('Authorization', auth(supervisor))
+      .send({ ...validBody, clientUuid: '3f2504e0-4f89-41d3-9a0c-0305e82c3302' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.created).toBe(true);
+  });
+
+  test('a malformed clientUuid is rejected', async () => {
+    query.mockResolvedValueOnce({ rows: [supervisor] });
+
+    const res = await request(app)
+      .post('/api/reports')
+      .set('Authorization', auth(supervisor))
+      .send({ ...validBody, clientUuid: 'not-a-uuid' });
+
+    expect(res.status).toBe(400);
+  });
+
   test('a report with no line items is still accepted', async () => {
     query
       .mockResolvedValueOnce({ rows: [supervisor] })
