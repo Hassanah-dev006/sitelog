@@ -2,13 +2,7 @@
 
 const { verifyToken, extractBearer } = require('../utils/token');
 const { query } = require('../db/pool');
-
-/** The three roles in the system. */
-const ROLES = Object.freeze({
-  SUPERVISOR: 'site_supervisor',
-  MANAGER: 'project_manager',
-  ADMIN: 'administrator',
-});
+const { ROLES } = require('../constants/roles');
 
 /**
  * Rejects the request unless it carries a valid token for an active user.
