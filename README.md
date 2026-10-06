@@ -10,7 +10,7 @@ Built as the Skills Immersion 1 internship artefact by **Hassanat Ajoke Bello**,
 
 ## Status
 
-**Week 8 — both sides working.** Supervisors file reports from a phone; management sees live status and knows which sites to chase.
+**Week 9 — feature complete.** Exports replace the manual compilation work, and every route is covered by a permission audit.
 
 | Week | Scope | State |
 |---|---|---|
@@ -19,8 +19,8 @@ Built as the Skills Immersion 1 internship artefact by **Hassanat Ajoke Bello**,
 | 6 | React app, mobile report form | ✅ done |
 | 7 | Offline drafts, photo upload | ✅ done |
 | 8 | Management dashboard | ✅ done |
-| 9 | PDF / Excel export, security review | next |
-| 10 | User acceptance testing | |
+| 9 | PDF / Excel export, security review | ✅ done |
+| 10 | User acceptance testing | next |
 | 11 | Deploy, document, hand over | |
 
 ---
@@ -77,7 +77,7 @@ The dev server proxies `/api` to port 4000, so no CORS setup is needed. Sign in 
 ## Tests
 
 ```bash
-npm test             # API    — 82 tests
+npm test             # API    — 172 tests
 cd web && npm test   # web    — 32 tests
 cd web && npm run build   # confirms the frontend compiles
 ```
@@ -162,6 +162,39 @@ Migration 003 adds indexes for the grouping columns. These queries are fine over
 
 ---
 
+## Exports
+
+Two formats, for two different needs.
+
+**The PDF** follows the layout of the paper report management already circulates. Matching something people recognise lowers the barrier to adoption far more than a better-looking document would. It streams into the response rather than being assembled in memory.
+
+**The spreadsheet** exists for the questions management has *not* asked yet. Six sheets — reports, manpower, equipment, materials, incidents, and a cover sheet saying what the file covers — with frozen headers and filters, so a manager can pivot the figures themselves instead of waiting on a new report being built.
+
+Both are generated from the same queries, so the two can never disagree about what happened in a given week.
+
+A range is capped at 92 days. Without that, one request could pull every report ever filed into a single document.
+
+## Permission audit
+
+The Week 9 security review is `tests/permissions.audit.test.js`, written as a test rather than a document. Every route is exercised against every role, and the expected outcome is declared in one table at the top of the file.
+
+A document goes stale the day after it is written. This fails the build the moment a route's permissions drift. The table is the specification and the suite enforces it.
+
+It also checks two things worth stating plainly:
+
+- A deactivated account loses access **immediately**, not when its token happens to expire.
+- A correctly signed token claiming `administrator` for a supervisor's account still gets 403. **The role is read from the database on every request, never from the token.**
+
+## Accessibility
+
+- A skip link to the main content, so keyboard and screen reader users are not walked through the navigation on every page.
+- Visible focus rings on every interactive element, not only form fields.
+- Chart bars are `aria-hidden`; the number beside each bar is the real content, so a screen reader reads figures rather than describing decoration.
+- `prefers-reduced-motion` is respected.
+- Body text is 16px minimum and touch targets are 48px, which started as a mobile decision and happens to be the accessibility one too.
+
+---
+
 ## API
 
 Send the token on every protected route:
@@ -209,6 +242,15 @@ Authorization: Bearer <token>
 | `GET` | `/api/dashboard/outstanding` | manager, admin | Sites with no report for a date |
 
 Accepts `from`, `to`, `date` and `projectId`. Defaults to the last 14 days.
+
+### Exports
+
+| Method | Route | Who | Returns |
+|---|---|---|---|
+| `GET` | `/api/export/pdf` | manager, admin | Formatted weekly site report |
+| `GET` | `/api/export/xlsx` | manager, admin | Six-sheet workbook of the raw data |
+
+`from` and `to` are required, 92 days maximum.
 
 List filters: `siteId`, `projectId`, `from`, `to`, `limit` (max 200), `offset`.
 
