@@ -40,6 +40,39 @@ body {
   flex-direction: column;
 }
 
+/* Hidden until focused, then clearly visible. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  color: var(--green);
+  padding: 12px 16px;
+  font-weight: 600;
+  border-radius: 0 0 var(--radius) 0;
+}
+
+.skip-link:focus {
+  left: 0;
+  outline: 3px solid var(--green-light);
+}
+
+#main:focus { outline: none; }
+
+/* Every interactive element gets a visible focus ring, including links and
+   buttons that are not form fields. */
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--green-light);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
 /* ------------------------------------------------------------- app bar -- */
 
 .appbar {
@@ -185,6 +218,19 @@ button {
   gap: 10px;
   font-size: 1rem;
   margin: 0 0 12px;
+}
+
+.export-bar { display: flex; gap: 8px; margin: 12px 0 16px; }
+
+.export-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 0.875rem;
 }
 
 .stats {

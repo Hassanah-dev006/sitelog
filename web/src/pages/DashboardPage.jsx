@@ -40,6 +40,21 @@ export default function DashboardPage() {
         {range.from} to {range.to}
       </p>
 
+      <div className="export-bar">
+        <a
+          className="secondary export-link"
+          href={`/api/export/pdf?from=${range.from}&to=${range.to}`}
+        >
+          Weekly report (PDF)
+        </a>
+        <a
+          className="secondary export-link"
+          href={`/api/export/xlsx?from=${range.from}&to=${range.to}`}
+        >
+          Data (Excel)
+        </a>
+      </div>
+
       {/* ------------------------------------------------- headline stats -- */}
       <div className="stats">
         <Stat label="Active projects" value={summary.activeProjects} />

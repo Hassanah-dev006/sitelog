@@ -8,6 +8,10 @@ export default function Layout() {
 
   return (
     <div className="app">
+      {/* First stop for a keyboard or screen reader user, so they are not
+          walked through the whole navigation on every page. */}
+      <a className="skip-link" href="#main">Skip to content</a>
+
       <header className="appbar">
         <div className="appbar-inner">
           <span className="brand">SiteLog</span>
@@ -24,12 +28,12 @@ export default function Layout() {
         )}
       </header>
 
-      <main className="content">
+      <main className="content" id="main" tabIndex={-1}>
         <Outlet />
       </main>
 
       {user && (
-        <nav className="tabbar">
+        <nav className="tabbar" aria-label="Main">
           {seesDashboard && <NavLink to="/dashboard">Dashboard</NavLink>}
           <NavLink to="/report/new">New report</NavLink>
           <NavLink to="/reports">Reports</NavLink>
