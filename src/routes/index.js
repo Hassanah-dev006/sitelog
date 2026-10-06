@@ -6,6 +6,7 @@ const projectRoutes = require('./project.routes');
 const siteRoutes = require('./site.routes');
 const reportRoutes = require('./report.routes');
 const dashboardRoutes = require('./dashboard.routes');
+const exportRoutes = require('./export.routes');
 
 const router = express.Router();
 
@@ -18,6 +19,6 @@ router.use('/projects', projectRoutes);
 router.use('/sites', siteRoutes);
 router.use('/reports', reportRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/export', exportRoutes);
 
-// Week 9 adds: /reports/export
 module.exports = router;
