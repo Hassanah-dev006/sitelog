@@ -66,4 +66,42 @@ async function me(req, res) {
   return res.json({ user: req.user });
 }
 
-module.exports = { login, createUser, me };
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Your current password is required.'),
+  newPassword: z.string().min(8, 'The new password must be at least 8 characters.'),
+});
+
+/**
+ * Changing your own password. There is no endpoint for changing anyone
+ * else's: an administrator who has lost access to an account creates a
+ * replacement rather than quietly taking over an existing one.
+ */
+async function changePassword(req, res, next) {
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: firstIssue(parsed) });
+  }
+
+  const { currentPassword, newPassword } = parsed.data;
+
+  try {
+    const result = await authService.changePassword(req.user.id, currentPassword, newPassword);
+
+    if (!result.ok) {
+      if (result.reason === 'wrong_password') {
+        return res.status(401).json({ error: 'Your current password is not correct.' });
+      }
+      if (result.reason === 'unchanged') {
+        return res.status(400).json({ error: 'The new password must be different.' });
+      }
+      return res.status(404).json({ error: 'Account not found.' });
+    }
+
+    // A fresh token, because the change just invalidated the old one.
+    return res.json({ user: result.user, token: result.token });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { login, createUser, me, changePassword };

@@ -3,12 +3,12 @@
 const express = require('express');
 const controller = require('../controllers/report.controller');
 const photoController = require('../controllers/photo.controller');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, blockUntilPasswordChanged } = require('../middleware/auth');
 const { uploadPhotos, handleUploadErrors } = require('../middleware/upload');
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(requireAuth, blockUntilPasswordChanged);
 
 // Every role may read; what they can see is narrowed per site inside the
 // controller and the query, not by the role alone.
