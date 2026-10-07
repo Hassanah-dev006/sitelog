@@ -80,6 +80,12 @@ export const api = {
 
   me: () => request('/auth/me'),
 
+  changePassword: (currentPassword, newPassword) =>
+    request('/auth/password', {
+      method: 'POST',
+      body: { currentPassword, newPassword },
+    }),
+
   listProjects: () => request('/projects'),
   listSites: (projectId) => request(`/projects/${projectId}/sites`),
 

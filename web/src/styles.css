@@ -91,6 +91,8 @@ button:focus-visible {
 
 .appbar-user { margin: 4px 0 0; font-size: 0.8125rem; opacity: 0.85; }
 
+.appbar-actions { display: flex; align-items: center; gap: 4px; }
+
 .link-button {
   background: none;
   border: none;

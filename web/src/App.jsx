@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import NewReportPage from './pages/NewReportPage';
 import ReportsPage from './pages/ReportsPage';
 import DashboardPage from './pages/DashboardPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import { ROLES } from './constants/roles';
 
 export default function App() {
@@ -38,6 +39,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={[ROLES.MANAGER, ROLES.ADMIN]}>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/account/password"
+            element={
+              <ProtectedRoute>
+                <ChangePasswordPage />
               </ProtectedRoute>
             }
           />

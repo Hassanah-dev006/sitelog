@@ -16,9 +16,12 @@ export default function Layout() {
         <div className="appbar-inner">
           <span className="brand">SiteLog</span>
           {user && (
-            <button type="button" className="link-button" onClick={signOut}>
-              Sign out
-            </button>
+            <span className="appbar-actions">
+              <NavLink className="link-button" to="/account/password">Password</NavLink>
+              <button type="button" className="link-button" onClick={signOut}>
+                Sign out
+              </button>
+            </span>
           )}
         </div>
         {user && (
