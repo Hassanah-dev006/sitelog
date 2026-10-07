@@ -18,20 +18,66 @@ function toPublicUser(row) {
     role: row.role,
     phone: row.phone || null,
     isActive: row.is_active,
+    mustChangePassword: Boolean(row.must_change_password),
   };
 }
 
+/**
+ * An administrator creating an account knows its password, so the account
+ * is flagged until the owner replaces it with one only they know.
+ */
 async function createUser({ fullName, email, password, role, phone = null }) {
   const passwordHash = await hashPassword(password);
 
   const { rows } = await query(
-    `INSERT INTO users (full_name, email, password_hash, role, phone)
-     VALUES ($1, LOWER($2), $3, $4, $5)
-     RETURNING id, full_name, email, role, phone, is_active`,
+    `INSERT INTO users (full_name, email, password_hash, role, phone, must_change_password)
+     VALUES ($1, LOWER($2), $3, $4, $5, TRUE)
+     RETURNING id, full_name, email, role, phone, is_active, must_change_password`,
     [fullName, email, passwordHash, role, phone]
   );
 
   return toPublicUser(rows[0]);
+}
+
+/**
+ * Replaces a password, having checked the current one.
+ *
+ * `password_changed_at` moves to now, which invalidates every token issued
+ * before this moment — including any session opened with the old password on
+ * someone else's device. A fresh token is returned so the person changing it
+ * stays signed in.
+ */
+async function changePassword(userId, currentPassword, newPassword) {
+  const { rows } = await query(
+    `SELECT id, full_name, email, password_hash, role, phone, is_active
+     FROM users WHERE id = $1`,
+    [userId]
+  );
+
+  const row = rows[0];
+  if (!row) return { ok: false, reason: 'not_found' };
+
+  const correct = await verifyPassword(currentPassword, row.password_hash);
+  if (!correct) return { ok: false, reason: 'wrong_password' };
+
+  const sameAgain = await verifyPassword(newPassword, row.password_hash);
+  if (sameAgain) return { ok: false, reason: 'unchanged' };
+
+  const passwordHash = await hashPassword(newPassword);
+
+  const updated = await query(
+    `UPDATE users
+     SET password_hash = $2,
+         password_changed_at = NOW(),
+         must_change_password = FALSE,
+         updated_at = NOW()
+     WHERE id = $1
+     RETURNING id, full_name, email, role, phone, is_active, must_change_password`,
+    [userId, passwordHash]
+  );
+
+  const user = updated.rows[0];
+  return { ok: true, user: toPublicUser(user), token: signToken(user) };
 }
 
 /**
@@ -43,7 +89,8 @@ async function createUser({ fullName, email, password, role, phone = null }) {
  */
 async function login({ email, password }) {
   const { rows } = await query(
-    `SELECT id, full_name, email, password_hash, role, phone, is_active
+    `SELECT id, full_name, email, password_hash, role, phone, is_active,
+            must_change_password
      FROM users WHERE LOWER(email) = LOWER($1)`,
     [email]
   );
@@ -66,10 +113,11 @@ async function login({ email, password }) {
 
 async function findById(id) {
   const { rows } = await query(
-    `SELECT id, full_name, email, role, phone, is_active FROM users WHERE id = $1`,
+    `SELECT id, full_name, email, role, phone, is_active, must_change_password
+     FROM users WHERE id = $1`,
     [id]
   );
   return rows[0] ? toPublicUser(rows[0]) : null;
 }
 
-module.exports = { createUser, login, findById, toPublicUser };
+module.exports = { createUser, login, changePassword, findById, toPublicUser };
