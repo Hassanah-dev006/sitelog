@@ -14,6 +14,9 @@ const pool = new Pool({
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
+  // Hosted Postgres requires TLS, and presents a certificate the managed
+  // provider signs rather than one in Node's default trust store.
+  ssl: env.isProduction ? { rejectUnauthorized: false } : false,
 });
 
 pool.on('error', (err) => {

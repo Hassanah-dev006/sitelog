@@ -1,0 +1,62 @@
+# Render blueprint for SiteLog.
+#
+# One web service serving both the API and the built frontend.
+#
+# The database is deliberately NOT defined here. Render's free PostgreSQL
+# expires 30 days after it is created, which would take the data down before
+# this project is handed over. The database lives on Neon instead, whose free
+# plan does not expire, and DATABASE_URL is set by hand in the Render
+# dashboard. See the Deployment section of the README.
+
+services:
+  - type: web
+    name: sitelog
+    runtime: node
+    plan: free
+    region: frankfurt          # closest Render region to Nigeria
+    branch: main
+    healthCheckPath: /api/health
+
+    # Installs the API, builds the frontend into web/dist, then applies any
+    # pending migrations. Migrations run here so a deploy cannot start
+    # serving against a schema it does not expect.
+    buildCommand: npm run deploy:build
+    startCommand: npm start
+
+    # Photos are written to disk, and a container's filesystem does not
+    # survive a restart. The free plan has no disks, so on free hosting
+    # photos are lost on each deploy. Uncomment on a paid plan.
+    # disk:
+    #   name: sitelog-uploads
+    #   mountPath: /var/data/uploads
+    #   sizeGB: 1
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Paste the Neon connection string in the Render dashboard.
+      # Never commit it: it contains the database password.
+      - key: DATABASE_URL
+        sync: false
+
+      # Generated once by Render and kept thereafter.
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRES_IN
+        value: 12h
+
+      - key: BCRYPT_ROUNDS
+        value: "12"
+
+      - key: MAX_PHOTO_BYTES
+        value: "3145728"
+
+      # Uncomment alongside the disk above.
+      # - key: UPLOAD_DIR
+      #   value: /var/data/uploads
+
+      # Set to the service's own URL once Render has assigned one.
+      - key: PUBLIC_URL
+        sync: false

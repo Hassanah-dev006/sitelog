@@ -32,6 +32,8 @@ This repository holds both halves:
 /web     the frontend (React, Vite)
 ```
 
+In development they run as two servers, with Vite proxying `/api`. In production the API serves the built frontend as well, so there is **one service, one URL and no CORS**.
+
 ## Requirements
 
 - Node.js 18 or newer
@@ -173,6 +175,57 @@ Two formats, for two different needs.
 Both are generated from the same queries, so the two can never disagree about what happened in a given week.
 
 A range is capped at 92 days. Without that, one request could pull every report ever filed into a single document.
+
+## Deployment
+
+One web service on **Render** serving both the API and the built frontend, with the database on **Neon**.
+
+**Why the database is not on Render.** Render's free PostgreSQL expires 30 days after it is created, then is deleted after a 14-day grace period. Neon's free plan does not expire. A database that deletes itself a month after the demo is not something to hand over to a company.
+
+### 1. Database — Neon
+
+1. Create a free project at [neon.com](https://neon.com)
+2. Copy the connection string (it looks like `postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require`)
+
+### 2. Web service — Render
+
+1. Push this repository to GitHub
+2. On [render.com](https://render.com), create a **Blueprint** from the repository — it reads `render.yaml`
+3. When prompted, paste the Neon connection string as `DATABASE_URL`
+4. Deploy. The build installs dependencies, builds the frontend and runs migrations.
+5. Once Render assigns a URL, set `PUBLIC_URL` to it and redeploy
+
+### 3. First account
+
+Render's shell, or locally with `DATABASE_URL` pointed at Neon:
+
+```bash
+npm run create-user -- --name "Your Name" --email you@example.com --role administrator
+```
+
+Do **not** run `npm run seed` against a real deployment. It creates accounts with a published password.
+
+### Environment variables
+
+| Variable | Notes |
+|---|---|
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | Neon connection string |
+| `JWT_SECRET` | 32+ characters; Render generates one |
+| `JWT_EXPIRES_IN` | `12h` |
+| `BCRYPT_ROUNDS` | `12` |
+| `MAX_PHOTO_BYTES` | `3145728` (3 MB) |
+| `UPLOAD_DIR` | Only with a persistent disk |
+| `PUBLIC_URL` | The deployed URL, for CORS |
+
+The server **refuses to start** in production if `JWT_SECRET` is short or still an example value, if `BCRYPT_ROUNDS` is too low, or if `DATABASE_URL` points at localhost. A deployment quietly running with the example secret is worse than one that will not start, because nobody finds out until it matters.
+
+### Known limitations on free hosting
+
+Both are consequences of the free plan, not of the code. Listed here because a handover document that hides them is useless.
+
+- **Photos do not survive a deploy.** They are written to the container's filesystem, which is replaced on every restart. The fix is a persistent disk (paid) or object storage. Report text, which is the point of the system, is in PostgreSQL and unaffected.
+- **The first request after idle is slow.** Render free services sleep after 15 minutes, and Neon scales compute to zero. Expect 30–60 seconds on the first load, then normal speed. Worth opening the page a minute before a demo.
 
 ## Permission audit
 

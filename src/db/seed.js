@@ -52,6 +52,20 @@ async function seed() {
     );
   }
 
+  // Assign the demo supervisor to those sites. Without this they can sign in
+  // but every submission is refused, because a supervisor may only report on
+  // a site they are assigned to.
+  await query(
+    `INSERT INTO site_assignments (user_id, site_id)
+     SELECT u.id, s.id
+     FROM users u
+     CROSS JOIN sites s
+     WHERE u.email = 'supervisor@tihama.test'
+       AND s.project_id = $1
+     ON CONFLICT DO NOTHING`,
+    [projectId]
+  );
+
   console.log('Seed complete.');
   console.log(`Demo accounts use the password: ${DEV_PASSWORD}`);
   console.log('Change these before any shared deployment.');

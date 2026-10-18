@@ -37,9 +37,43 @@ const env = {
   // generous — it exists to stop an un-compressed original being sent.
   uploadDir: process.env.UPLOAD_DIR || require('path').join(__dirname, '..', '..', 'uploads'),
   maxPhotoBytes: Number(process.env.MAX_PHOTO_BYTES || 3 * 1024 * 1024),
+
+  // The public address once deployed, e.g. https://sitelog.onrender.com
+  publicUrl: process.env.PUBLIC_URL || null,
 };
 
 env.isProduction = env.nodeEnv === 'production';
 env.isTest = env.nodeEnv === 'test';
+
+/**
+ * Refuse to start a production server with configuration that is fine on a
+ * laptop and dangerous in public.
+ *
+ * A deployment that quietly runs with the example secret is worse than one
+ * that will not start, because nobody finds out until it matters.
+ */
+if (env.isProduction) {
+  const problems = [];
+
+  if (env.jwtSecret.length < 32) {
+    problems.push('JWT_SECRET must be at least 32 characters in production.');
+  }
+  if (/replace_me|test-secret|changeme/i.test(env.jwtSecret)) {
+    problems.push('JWT_SECRET is still an example value.');
+  }
+  if (env.bcryptRounds < 10) {
+    problems.push('BCRYPT_ROUNDS must be at least 10 in production.');
+  }
+  if (/localhost|127\.0\.0\.1/.test(env.databaseUrl)) {
+    problems.push('DATABASE_URL points at localhost, which is not reachable from a host.');
+  }
+
+  if (problems.length) {
+    console.error('\nRefusing to start in production:\n');
+    problems.forEach((p) => console.error(`  - ${p}`));
+    console.error('');
+    process.exit(1);
+  }
+}
 
 module.exports = env;
