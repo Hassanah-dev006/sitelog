@@ -34,6 +34,26 @@ This repository holds both halves:
 
 In development they run as two servers, with Vite proxying `/api`. In production the API serves the built frontend as well, so there is **one service, one URL and no CORS**.
 
+## Technology choices
+
+Decided in week 3, before any production code was written.
+
+| Layer | Choice | Why this one |
+|---|---|---|
+| Database | PostgreSQL | The data is strongly relational — projects have sites, sites have reports, reports have line items. Foreign keys and `CHECK` constraints let the database refuse bad data instead of trusting every code path to get it right. |
+| API | Node.js + Express | Same language as the frontend, so one person maintaining both does not context-switch between two ecosystems. Express is small enough to read end to end. |
+| Frontend | React + Vite | React is the stack the IT team already recognises, and Vite's build output is small, which matters for the field users this is built for. |
+| Auth | JSON Web Tokens + bcrypt | Stateless tokens avoid a session store. The role is still read from the database on every request, so a token cannot grant access the account does not have. |
+| Validation | Zod | One schema per endpoint, checked before anything reaches the database. |
+| Charts | Hand-written SVG | A charting library would have added roughly 150 KB to a bundle deliberately kept small for weak connections. The entire dashboard came to 1.2 KB gzipped instead. |
+| Tests | Jest (API) + Vitest (web) | Each is the standard runner for its half. Both mock their dependencies, so the suite runs without a database or a browser. |
+
+**The deciding question was not "what is best?" but "who maintains this in December?"**
+
+I will not be here after 20 November. Every choice above favours something Tihama's IT Department can read, run and extend without me — a widely used stack, a small dependency list, and no clever abstraction that needs explaining. A more interesting technology that nobody else can support would be a worse outcome for the company, however much I might have learned from it.
+
+The same reasoning drove what was *not* used: no ORM (the SQL is plain and readable), no CSS framework (one stylesheet, no build-time magic), no charting library, no state management library beyond React's own.
+
 ## Requirements
 
 - Node.js 18 or newer
