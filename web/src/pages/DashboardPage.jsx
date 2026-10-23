@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import BarChart, { TrendChart } from '../components/BarChart';
+import { filenameFromDisposition, saveBlob } from '../lib/download';
 
 /**
  * The management view.
@@ -13,6 +14,8 @@ export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(null);
+  const [exportError, setExportError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,6 +31,28 @@ export default function DashboardPage() {
     };
   }, []);
 
+  async function download(kind) {
+    setExportError(null);
+    setDownloading(kind);
+
+    try {
+      const { range } = data;
+      const { blob, disposition } = await api.downloadExport(kind, {
+        from: range.from,
+        to: range.to,
+      });
+
+      saveBlob(
+        blob,
+        filenameFromDisposition(disposition, `sitelog-${range.from}-to-${range.to}.${kind}`)
+      );
+    } catch (err) {
+      setExportError(err.message);
+    } finally {
+      setDownloading(null);
+    }
+  }
+
   if (loading) return <p className="muted center">Loading dashboard…</p>;
   if (error) return <p className="alert alert-error" role="alert">{error}</p>;
 
@@ -40,19 +65,25 @@ export default function DashboardPage() {
         {range.from} to {range.to}
       </p>
 
+      {exportError && <p className="alert alert-error" role="alert">{exportError}</p>}
+
       <div className="export-bar">
-        <a
+        <button
+          type="button"
           className="secondary export-link"
-          href={`/api/export/pdf?from=${range.from}&to=${range.to}`}
+          disabled={downloading !== null}
+          onClick={() => download('pdf')}
         >
-          Weekly report (PDF)
-        </a>
-        <a
+          {downloading === 'pdf' ? 'Preparing…' : 'Weekly report (PDF)'}
+        </button>
+        <button
+          type="button"
           className="secondary export-link"
-          href={`/api/export/xlsx?from=${range.from}&to=${range.to}`}
+          disabled={downloading !== null}
+          onClick={() => download('xlsx')}
         >
-          Data (Excel)
-        </a>
+          {downloading === 'xlsx' ? 'Preparing…' : 'Data (Excel)'}
+        </button>
       </div>
 
       {/* ------------------------------------------------- headline stats -- */}

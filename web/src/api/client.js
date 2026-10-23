@@ -107,6 +107,38 @@ export const api = {
 
   createReport: (payload) => request('/reports', { method: 'POST', body: payload }),
 
+  /**
+   * Fetches an export with the auth header attached and returns the blob.
+   * A plain link cannot do this — see lib/download.js.
+   */
+  async downloadExport(kind, params) {
+    const query = new URLSearchParams(params).toString();
+    const headers = {};
+    const token = getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let response;
+    try {
+      response = await fetch(`${BASE_URL}/export/${kind}?${query}`, { headers });
+    } catch {
+      throw new ApiError('No connection. The export could not be downloaded.', 0);
+    }
+
+    if (!response.ok) {
+      // An error comes back as JSON even though we asked for a file.
+      const payload = await response.json().catch(() => null);
+      throw new ApiError(
+        payload?.error || `The export failed (${response.status}).`,
+        response.status
+      );
+    }
+
+    return {
+      blob: await response.blob(),
+      disposition: response.headers.get('Content-Disposition'),
+    };
+  },
+
   /** Photos go up separately, after the report itself has landed. */
   async uploadPhotos(reportId, files) {
     const form = new FormData();
