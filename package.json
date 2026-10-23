@@ -13,7 +13,8 @@
     "seed": "node src/db/seed.js",
     "create-user": "node scripts/create-user.js",
     "list-sites": "node scripts/list-sites.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "test:all": "jest --runInBand && npm --prefix web test"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -33,7 +34,15 @@
     "supertest": "^7.0.0"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "//": "Only the API suite. The web/ tests are Vitest and run via `npm --prefix web test`.",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/web/"
+    ]
   },
   "engines": {
     "node": ">=18"
