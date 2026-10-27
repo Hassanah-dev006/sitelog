@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "build": "npm --prefix web ci && npm --prefix web run build",
+    "build": "npm --prefix web ci --include=dev && npm --prefix web run build",
     "deploy:build": "npm ci && npm run build && npm run migrate",
     "migrate": "node scripts/migrate.js",
     "seed": "node src/db/seed.js",
