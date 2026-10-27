@@ -9,14 +9,30 @@ const env = require('../config/env');
  * Creating a pool per request exhausts PostgreSQL's connection limit very
  * quickly, which is a common and hard-to-diagnose production failure.
  */
+/**
+ * Whether to use TLS, decided by the connection string rather than by
+ * NODE_ENV.
+ *
+ * A hosted database needs TLS wherever the client happens to be running —
+ * including an admin script run from a laptop against production. Keying
+ * this off NODE_ENV meant those scripts failed with a confusing handshake
+ * error unless you also pretended to be a production server.
+ *
+ * rejectUnauthorized is false because managed providers present a
+ * certificate signed by their own authority, not one in Node's trust store.
+ */
+function needsTls(url) {
+  if (/sslmode=(require|verify-ca|verify-full)/.test(url)) return true;
+  // Anything that is not a local database is remote, so assume TLS.
+  return !/@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
+}
+
 const pool = new Pool({
   connectionString: env.databaseUrl,
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  // Hosted Postgres requires TLS, and presents a certificate the managed
-  // provider signs rather than one in Node's default trust store.
-  ssl: env.isProduction ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 10000,
+  ssl: needsTls(env.databaseUrl) ? { rejectUnauthorized: false } : false,
 });
 
 pool.on('error', (err) => {
