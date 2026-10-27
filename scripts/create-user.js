@@ -1,62 +1,9 @@
 'use strict';
 
-const crypto = require('crypto');
 const { pool, query } = require('../src/db/pool');
 const { hashPassword } = require('../src/utils/password');
 const { ROLES, ALL_ROLES } = require('../src/constants/roles');
-
-/**
- * Creates a real account from the command line.
- *
- * Every system needs a way to make the first administrator before anyone can
- * sign in to make one, and a way to add people during deployment. This is it.
- *
- *   npm run create-user -- --name "Full Name" --email a@b.com --role administrator
- *
- * Options:
- *   --name      required
- *   --email     required
- *   --role      site_supervisor | project_manager | administrator
- *   --password  optional; one is generated and printed if omitted
- *   --site      site id to assign (repeatable, site supervisors only)
- *
- * The password is printed once, here, on your own machine. It is never
- * emailed and never stored anywhere but as a hash. Send it to the person
- * through something private and have them change it.
- */
-
-function parseArgs(argv) {
-  const args = { site: [] };
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const key = argv[i];
-    if (!key.startsWith('--')) continue;
-
-    const name = key.slice(2);
-    const value = argv[i + 1];
-
-    if (value === undefined || value.startsWith('--')) {
-      console.error(`Missing value for --${name}`);
-      process.exit(1);
-    }
-
-    if (name === 'site') args.site.push(Number(value));
-    else args[name] = value;
-
-    i += 1;
-  }
-
-  return args;
-}
-
-/** Readable but strong: no ambiguous characters to misread over the phone. */
-function generatePassword() {
-  const alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const bytes = crypto.randomBytes(16);
-  let out = '';
-  for (const b of bytes) out += alphabet[b % alphabet.length];
-  return `${out.slice(0, 5)}-${out.slice(5, 10)}-${out.slice(10, 16)}`;
-}
+const { parseArgs, askPasswordTwice, generatePassword } = require('./lib/prompt');
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -86,8 +33,16 @@ async function main() {
     return;
   }
 
-  const password = args.password || generatePassword();
-  const generated = !args.password;
+  let password;
+  let generated = true;
+
+  if (args.ask) {
+    password = await askPasswordTwice();
+    if (!password) return;
+    generated = false;
+  } else {
+    password = generatePassword();
+  }
 
   try {
     const passwordHash = await hashPassword(password);
@@ -123,12 +78,19 @@ async function main() {
       console.log(`Assigned to site(s): ${args.site.join(', ')}`);
     }
 
-    console.log('\n  Temporary password: ' + password);
-    console.log('\nShown once. Send it privately — not in the same message as the link.');
-    console.log('They will be asked to set their own password at first sign-in.');
+    if (generated) {
+      console.log('\n  Temporary password: ' + password);
+      console.log('\nShown once. Send it privately — not in the same message as the link.');
+    } else {
+      console.log('\nPassword set. It was never displayed or written to your shell history.');
+    }
+
+    console.log('They will be asked to choose their own password at first sign-in.');
   } catch (err) {
     if (err.code === '23505') {
       console.error(`An account already exists for ${args.email}.`);
+      console.error('\nTo give it a new password instead:');
+      console.error(`  npm run reset-password -- --email ${args.email} --ask`);
     } else {
       console.error(err.message);
     }

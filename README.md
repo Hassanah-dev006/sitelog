@@ -71,7 +71,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 createdb sitelog        # if the database does not exist yet
 npm run migrate         # create the tables
-npm run seed            # optional: demo accounts and a sample project
+npm run seed            # optional: sample accounts and a sample project
 
 npm run dev             # http://localhost:4000
 ```
@@ -200,7 +200,7 @@ A range is capped at 92 days. Without that, one request could pull every report 
 
 One web service on **Render** serving both the API and the built frontend, with the database on **Neon**.
 
-**Why the database is not on Render.** Render's free PostgreSQL expires 30 days after it is created, then is deleted after a 14-day grace period. Neon's free plan does not expire. A database that deletes itself a month after the demo is not something to hand over to a company.
+**Why the database is not on Render.** Render's free PostgreSQL expires 30 days after it is created, then is deleted after a 14-day grace period. Neon's free plan does not expire. A database that deletes itself a month after handover is not something to give a company.
 
 ### 1. Database — Neon
 
@@ -223,7 +223,24 @@ Render's shell, or locally with `DATABASE_URL` pointed at Neon:
 npm run create-user -- --name "Your Name" --email you@example.com --role administrator
 ```
 
-Do **not** run `npm run seed` against a real deployment. It creates accounts with a published password.
+A temporary password is generated and printed once. To choose one yourself instead, add `--ask` and you will be prompted for it twice, hidden:
+
+```bash
+npm run create-user -- --name "Your Name" --email you@example.com --role administrator --ask
+```
+
+There is deliberately no `--password` flag. A password typed as a command-line argument is written to your shell history in plain text and sits there for months.
+
+Either way the account is flagged `must_change_password`, so whoever owns it chooses their own password at first sign-in and yours stops working.
+
+Assign a site supervisor to their sites at the same time — `npm run list-sites` shows the ids:
+
+```bash
+npm run create-user -- --name "Name" --email them@example.com \
+  --role site_supervisor --site 1 --site 2
+```
+
+Do **not** run `npm run seed` against a real deployment. It creates accounts with a password published in this repository, and its sample names are not real staff.
 
 ### Environment variables
 
@@ -245,7 +262,7 @@ The server **refuses to start** in production if `JWT_SECRET` is short or still 
 Both are consequences of the free plan, not of the code. Listed here because a handover document that hides them is useless.
 
 - **Photos do not survive a deploy.** They are written to the container's filesystem, which is replaced on every restart. The fix is a persistent disk (paid) or object storage. Report text, which is the point of the system, is in PostgreSQL and unaffected.
-- **The first request after idle is slow.** Render free services sleep after 15 minutes, and Neon scales compute to zero. Expect 30–60 seconds on the first load, then normal speed. Worth opening the page a minute before a demo.
+- **The first request after idle is slow.** Render free services sleep after 15 minutes, and Neon scales compute to zero. Expect 30–60 seconds on the first load, then normal speed. Worth opening the page a minute before showing it to anyone.
 
 ## Permission audit
 

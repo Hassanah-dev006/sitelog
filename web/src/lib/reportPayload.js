@@ -1,12 +1,3 @@
-/**
- * Turns the form's state into the body the API expects.
- *
- * Kept as a pure function so it can be tested without rendering anything,
- * and so the form component stays about the interface rather than the data
- * shape.
- */
-
-/** A row the supervisor started but left blank should not be submitted. */
 const hasText = (v) => typeof v === 'string' && v.trim() !== '';
 
 const num = (v) => {
@@ -68,11 +59,6 @@ export function buildReportPayload(form) {
   return payload;
 }
 
-/**
- * Checks the form before it is sent, so an obvious mistake is caught on the
- * phone rather than after a round trip over a weak connection.
- * Returns an array of messages; empty means valid.
- */
 export function validateReport(form, today = new Date().toISOString().slice(0, 10)) {
   const errors = [];
 
