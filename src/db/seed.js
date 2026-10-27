@@ -15,8 +15,8 @@ const DEV_PASSWORD = 'ChangeMe123!';
 
 const USERS = [
   { fullName: 'System Administrator', email: 'admin@tihama.test', role: 'administrator' },
-  { fullName: 'Project Manager (Demo)', email: 'manager@tihama.test', role: 'project_manager' },
-  { fullName: 'Site Supervisor (Demo)', email: 'supervisor@tihama.test', role: 'site_supervisor' },
+  { fullName: 'Safiyyah Umar', email: 'manager@tihama.test', role: 'project_manager' },
+  { fullName: 'Muhammad Abdullahi', email: 'supervisor@tihama.test', role: 'site_supervisor' },
 ];
 
 async function seed() {
@@ -52,9 +52,9 @@ async function seed() {
     );
   }
 
-  // Assign the demo supervisor to those sites. Without this they can sign in
-  // but every submission is refused, because a supervisor may only report on
-  // a site they are assigned to.
+  // Assign the sample supervisor to those sites. Without this they can sign
+  // in but every submission is refused, because a supervisor may only report
+  // on a site they are assigned to.
   await query(
     `INSERT INTO site_assignments (user_id, site_id)
      SELECT u.id, s.id
@@ -67,7 +67,7 @@ async function seed() {
   );
 
   console.log('Seed complete.');
-  console.log(`Demo accounts use the password: ${DEV_PASSWORD}`);
+  console.log(`Sample accounts use the password: ${DEV_PASSWORD}`);
   console.log('Change these before any shared deployment.');
 }
 
