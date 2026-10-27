@@ -21,10 +21,24 @@ const env = require('../config/env');
  * rejectUnauthorized is false because managed providers present a
  * certificate signed by their own authority, not one in Node's trust store.
  */
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+
 function needsTls(url) {
-  if (/sslmode=(require|verify-ca|verify-full)/.test(url)) return true;
-  // Anything that is not a local database is remote, so assume TLS.
-  return !/@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    // Not a URL we can read. Fall back to the explicit setting only, rather
+    // than guessing wrong in either direction.
+    return /sslmode=(require|verify-ca|verify-full)/.test(url);
+  }
+
+  const mode = parsed.searchParams.get('sslmode');
+  if (mode) return ['require', 'verify-ca', 'verify-full'].includes(mode);
+
+  // No explicit setting: local databases usually have no certificate,
+  // anything else is remote and should be encrypted.
+  return !LOCAL_HOSTS.has(parsed.hostname);
 }
 
 const pool = new Pool({
