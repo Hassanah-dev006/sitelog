@@ -1,12 +1,13 @@
 'use strict';
 
-const { pool, query } = require('../src/db/pool');
+const { pool, query, describeTarget } = require('../src/db/pool');
 
 /**
  * Prints the site ids, which you need when assigning a supervisor with
  * `npm run create-user -- --site <id>`.
  */
 async function main() {
+  console.log(`\nDatabase: ${describeTarget()}`);
   const { rows } = await query(
     `SELECT s.id, s.name, p.name AS project_name, p.status,
             (SELECT COUNT(*) FROM site_assignments a WHERE a.site_id = s.id) AS supervisors

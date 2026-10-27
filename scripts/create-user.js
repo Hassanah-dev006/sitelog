@@ -1,11 +1,12 @@
 'use strict';
 
-const { pool, query } = require('../src/db/pool');
+const { pool, query, describeTarget } = require('../src/db/pool');
 const { hashPassword } = require('../src/utils/password');
 const { ROLES, ALL_ROLES } = require('../src/constants/roles');
 const { parseArgs, askPasswordTwice, generatePassword } = require('./lib/prompt');
 
 async function main() {
+  console.log(`\nDatabase: ${describeTarget()}`);
   const args = parseArgs(process.argv.slice(2));
   const missing = ['name', 'email', 'role'].filter((k) => !args[k]);
 

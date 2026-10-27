@@ -79,4 +79,22 @@ async function withTransaction(callback) {
   }
 }
 
-module.exports = { pool, query, withTransaction };
+/**
+ * A short, safe description of which database this process is talking to.
+ *
+ * Admin scripts print this before they do anything. Running a command
+ * against your laptop when you meant production — or the reverse — is easy,
+ * silent, and occasionally expensive.
+ */
+function describeTarget() {
+  try {
+    const u = new URL(env.databaseUrl);
+    const local = LOCAL_HOSTS.has(u.hostname);
+    const name = u.pathname.replace(/^\//, '') || '(default)';
+    return `${local ? 'LOCAL' : 'REMOTE'}  ${u.hostname}/${name}`;
+  } catch {
+    return 'unknown database';
+  }
+}
+
+module.exports = { pool, query, withTransaction, describeTarget };

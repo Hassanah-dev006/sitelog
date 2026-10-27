@@ -1,6 +1,6 @@
 'use strict';
 
-const { pool, query } = require('../src/db/pool');
+const { pool, query, describeTarget } = require('../src/db/pool');
 const { hashPassword } = require('../src/utils/password');
 const {
   parseArgs, askPasswordTwice, generatePassword,
@@ -20,6 +20,7 @@ const {
  * ended immediately.
  */
 async function main() {
+  console.log(`\nDatabase: ${describeTarget()}`);
   const args = parseArgs(process.argv.slice(2));
 
   if (!args.email) {
