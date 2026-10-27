@@ -41,8 +41,26 @@ function needsTls(url) {
   return !LOCAL_HOSTS.has(parsed.hostname);
 }
 
+/**
+ * Removes sslmode from the connection string.
+ *
+ * We have already read it in needsTls and set `ssl` explicitly, so leaving it
+ * in the URL only makes the driver print a deprecation warning about how it
+ * interprets the value — noise in every log and every terminal.
+ */
+function withoutSslMode(url) {
+  try {
+    const u = new URL(url);
+    u.searchParams.delete('sslmode');
+    u.searchParams.delete('channel_binding');
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 const pool = new Pool({
-  connectionString: env.databaseUrl,
+  connectionString: withoutSslMode(env.databaseUrl),
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
