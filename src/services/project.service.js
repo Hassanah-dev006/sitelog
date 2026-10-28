@@ -134,6 +134,42 @@ async function unassignSupervisor(siteId, userId) {
   return rowCount > 0;
 }
 
+/**
+ * The sites the signed-in user may report on.
+ *
+ * A supervisor gets the sites they are assigned to; managers and
+ * administrators get every active site. Without this a supervisor had no way
+ * to discover their own site ids and had to be told them out of band, which
+ * is not a reasonable thing to ask of someone standing on a building site.
+ */
+async function listSitesForUser(user) {
+  const seesAll = user.role !== 'site_supervisor';
+
+  const { rows } = await query(
+    `SELECT s.id, s.project_id, s.name, s.location, s.is_active,
+            p.name AS project_name
+     FROM sites s
+     JOIN projects p ON p.id = s.project_id
+     WHERE s.is_active
+       AND p.status = 'active'
+       ${seesAll ? '' : `AND EXISTS (
+         SELECT 1 FROM site_assignments a
+         WHERE a.site_id = s.id AND a.user_id = $1
+       )`}
+     ORDER BY p.name, s.name`,
+    seesAll ? [] : [user.id]
+  );
+
+  return rows.map((r) => ({
+    id: Number(r.id),
+    projectId: Number(r.project_id),
+    name: r.name,
+    location: r.location,
+    isActive: r.is_active,
+    projectName: r.project_name,
+  }));
+}
+
 async function listSiteSupervisors(siteId) {
   const { rows } = await query(
     `SELECT u.id, u.full_name, u.email
@@ -148,6 +184,6 @@ async function listSiteSupervisors(siteId) {
 
 module.exports = {
   listProjects, getProject, createProject, updateProject,
-  listSites, getSite, createSite,
+  listSites, getSite, createSite, listSitesForUser,
   assignSupervisor, unassignSupervisor, listSiteSupervisors,
 };

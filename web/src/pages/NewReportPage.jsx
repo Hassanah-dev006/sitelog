@@ -63,31 +63,23 @@ export default function NewReportPage() {
     if (online) flushOutbox();
   }, [online, flushOutbox]);
 
-  // Sites come from the projects the signed-in user may see.
+  // One call, whatever the role: a supervisor gets their assigned sites,
+  // a manager gets all of them.
   useEffect(() => {
     let cancelled = false;
 
-    async function loadSites() {
-      try {
-        const { projects } = await api.listProjects();
-        const lists = await Promise.all(
-          projects.map((p) =>
-            api
-              .listSites(p.id)
-              .then((d) => d.sites.map((s) => ({ ...s, projectName: p.name })))
-              .catch(() => [])
-          )
-        );
-        if (!cancelled) setSites(lists.flat());
-      } catch {
-        // A supervisor cannot list projects. They type the site id instead.
+    api
+      .mySites()
+      .then((data) => {
+        if (!cancelled) setSites(data.sites);
+      })
+      .catch(() => {
         if (!cancelled) setSites([]);
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setLoadingSites(false);
-      }
-    }
+      });
 
-    loadSites();
     return () => {
       cancelled = true;
     };
@@ -207,14 +199,10 @@ export default function NewReportPage() {
             ))}
           </select>
         ) : (
-          <input
-            id="site"
-            type="number"
-            inputMode="numeric"
-            placeholder="Site number"
-            value={form.siteId}
-            onChange={(e) => set('siteId', e.target.value)}
-          />
+          <p className="alert alert-offline" role="status">
+            You are not assigned to any site yet. Ask an administrator to assign you before
+            filing a report.
+          </p>
         )}
 
         <label htmlFor="date">Date</label>

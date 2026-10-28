@@ -89,6 +89,9 @@ export const api = {
   listProjects: () => request('/projects'),
   listSites: (projectId) => request(`/projects/${projectId}/sites`),
 
+  /** The sites the signed-in user may report on, whatever their role. */
+  mySites: () => request('/sites/mine'),
+
   listReports: (params = {}) => {
     const query = new URLSearchParams(
       Object.entries(params).filter(([, v]) => v !== undefined && v !== '')

@@ -122,6 +122,15 @@ async function createSite(req, res, next) {
 
 // ----------------------------------------------------------- assignments ---
 
+/** The sites the signed-in user may report on. Every role may call this. */
+async function mySites(req, res, next) {
+  try {
+    return res.json({ sites: await service.listSitesForUser(req.user) });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 async function listSupervisors(req, res, next) {
   const siteId = parseId(req.params.siteId);
   if (!siteId) return res.status(400).json({ error: 'Invalid site id.' });
@@ -170,6 +179,6 @@ async function unassign(req, res, next) {
 
 module.exports = {
   list, getOne, create, update,
-  listSites, createSite,
+  listSites, createSite, mySites,
   listSupervisors, assign, unassign,
 };
