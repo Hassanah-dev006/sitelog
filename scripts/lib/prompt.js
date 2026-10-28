@@ -44,7 +44,10 @@ function parseArgs(argv) {
       process.exit(1);
     }
 
-    if (name === 'site') words.forEach((w) => args.site.push(Number(w)));
+    // --site repeats, and its meaning depends on the script: an id for
+    // create-user, a name for create-project. Keep the raw text and let each
+    // script interpret it — converting here turned "Main Site" into NaN.
+    if (name === 'site') args.site.push(words.join(' '));
     else args[name] = words.join(' ');
 
     i = j - 1;

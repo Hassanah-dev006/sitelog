@@ -34,6 +34,18 @@ async function main() {
     return;
   }
 
+  // --site is an id here. Reject anything that is not one rather than
+  // letting it reach the database as NaN.
+  const siteIds = args.site.map(Number);
+  const badSite = args.site.find((_, i) => !Number.isInteger(siteIds[i]) || siteIds[i] < 1);
+
+  if (badSite !== undefined) {
+    console.error(`--site expects a site id, not "${badSite}".`);
+    console.error('Run `npm run list-sites` to see the ids.');
+    process.exitCode = 1;
+    return;
+  }
+
   let password;
   let generated = true;
 
@@ -59,7 +71,7 @@ async function main() {
 
     const user = rows[0];
 
-    for (const siteId of args.site) {
+    for (const siteId of siteIds) {
       const assigned = await query(
         `INSERT INTO site_assignments (user_id, site_id)
          SELECT $1, id FROM sites WHERE id = $2
@@ -75,8 +87,8 @@ async function main() {
 
     console.log(`\nCreated ${user.full_name} <${user.email}> as ${user.role}.`);
 
-    if (args.site.length) {
-      console.log(`Assigned to site(s): ${args.site.join(', ')}`);
+    if (siteIds.length) {
+      console.log(`Assigned to site(s): ${siteIds.join(', ')}`);
     }
 
     if (generated) {

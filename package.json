@@ -11,6 +11,7 @@
     "deploy:build": "npm ci && npm run build && npm run migrate",
     "migrate": "node scripts/migrate.js",
     "seed": "node src/db/seed.js",
+    "assign-site": "node scripts/assign-site.js",
     "create-project": "node scripts/create-project.js",
     "create-user": "node scripts/create-user.js",
     "reset-password": "node scripts/reset-password.js",
