@@ -3,13 +3,7 @@
 const reportService = require('../services/report.service');
 const { canAccessSite } = require('../services/access.service');
 
-/**
- * Attaching site photographs to a report.
- *
- * Photos are uploaded separately from the report itself. On a weak
- * connection the text of a report is small and should not be held hostage to
- * a few megabytes of images, so the report lands first and photos follow.
- */
+
 async function upload(req, res, next) {
   const reportId = Number(req.params.id);
   if (!Number.isInteger(reportId) || reportId < 1) {
