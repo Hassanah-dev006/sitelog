@@ -71,11 +71,7 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8, 'The new password must be at least 8 characters.'),
 });
 
-/**
- * Changing your own password. There is no endpoint for changing anyone
- * else's: an administrator who has lost access to an account creates a
- * replacement rather than quietly taking over an existing one.
- */
+
 async function changePassword(req, res, next) {
   const parsed = changePasswordSchema.safeParse(req.body);
   if (!parsed.success) {
