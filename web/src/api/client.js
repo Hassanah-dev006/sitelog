@@ -51,8 +51,13 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    // fetch only rejects on a network failure, not on a 4xx or 5xx.
-    throw new ApiError('No connection. Check your network and try again.', 0);
+    // fetch only rejects when the request never completed — no connection,
+    // or the server did not answer. We cannot tell which from here, so the
+    // message must not blame the user's network for a server that is down.
+    throw new ApiError(
+      'Could not reach the server. It may be starting up — wait a moment and try again.',
+      0
+    );
   }
 
   if (response.status === 204) return null;
