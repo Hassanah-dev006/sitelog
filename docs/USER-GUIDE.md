@@ -29,7 +29,6 @@ SiteLog replaces writing that on paper. A supervisor fills it in on a phone in a
 
 Choose something you will remember. A short phrase works better than a short tangle of symbols. At least 8 characters.
 
-> **📸 Screenshot:** the sign-in screen
 
 **Add it to your home screen** so it opens like an app:
 
@@ -54,7 +53,6 @@ Everything else is optional. Fill in what is useful and leave the rest.
 
 **Delays or problems** — leave blank if there were none.
 
-> **📸 Screenshot:** the report form, top section
 
 ### Adding the detail
 
@@ -83,7 +81,6 @@ Below the main fields are four sections, closed until you need them. Tap one to 
 - How serious: low, medium, high
 - What happened
 
-> **Record every safety incident, however small.** A near miss with no injury is still worth recording. It is what stops the same thing happening again with a worse outcome.
 
 **Photos** — tap *Add photo* to attach up to five pictures. Your phone shrinks them before sending, so they go through even on a weak connection.
 
@@ -95,7 +92,6 @@ Tap **Send report**.
 
 **If you do not have signal**, you will see an orange message saying the report is saved on your phone and will send itself. **This is not an error.** Your report is safe. You can close the app and go home.
 
-> **📸 Screenshot:** the orange "saved on this phone" message
 
 The app sends it by itself when you are next in coverage. If you open the app and see *"1 report is saved on this phone"*, it has not gone yet — it will go as soon as there is a connection.
 
@@ -141,7 +137,6 @@ If every site has reported, it says so.
 - Manpower by trade
 - Equipment hours, with any breakdowns noted
 
-> **📸 Screenshot:** the dashboard, including the outstanding-reports panel
 
 ### Downloading reports
 
