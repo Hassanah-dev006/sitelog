@@ -6,7 +6,7 @@ const { pool } = require('./db/pool');
 
 const server = app.listen(env.port, () => {
   console.log(`SiteLog API listening on port ${env.port} (${env.nodeEnv})`);
-});
+}); 
 
 /** Close connections cleanly so in-flight requests are not cut off. */
 function shutdown(signal) {
